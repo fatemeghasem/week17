@@ -60,7 +60,7 @@
  
 
 + امیدواریم از کار من راضی باشید
-  - [x] بله راضی هستیم     @octocat:This PR looks greate 
+  - [x]  @octocat:+1:This PR looks greate - بله راضی هستیم    
   - [ ] خیر ناامیدمان کردید    @octocat:shipit 
 
   ```
