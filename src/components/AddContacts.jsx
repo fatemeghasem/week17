@@ -1,13 +1,31 @@
 import { v4 } from "uuid";
-import React from "react";
+import { useContacts } from "../context/ContactsContext";
 import { IoIosPersonAdd } from "react-icons/io";
+
+import React from "react";
+import * as Yup from "yup"; 
+
 import inputs from "../Services/inputs";
 import styles from "./AddContacts.module.css";
-import { useContacts } from "../context/ContactsContext";
 
 function AddContacts() {
   const { state, dispatch } = useContacts();
   const [alert, setAlert] = React.useState("");
+
+  const validationSchema = Yup.object({
+    name: Yup.string()
+      .min(7, "Please enter at least 7 characters.")
+      .max(30, "You can enter a maximum of 30 characters.")
+      .required("Please enter the contact name."),
+    email: Yup.string()
+      .email("Enter a valid email.")
+      .required("Please enter the contact's email."),
+    job: Yup.string()
+      .max(30, "You can enter a maximum of 30 characters."),
+    phone: Yup.string()
+      .required("Please enter the contact's phone.")
+      .matches(/^[0-9]{11}$/, "Phone number must be exactly 11 digits."), 
+  });
 
   const changeHandler = (event) => {
     const name = event.target.name;
@@ -16,21 +34,23 @@ function AddContacts() {
     dispatch({ type: 'SET_CONTACT', payload: { ...state.contact, [name]: value } });
   };
 
-  const addHandler = () => {
+  const addHandler = async () => {
     const { name, email, job, phone } = state.contact;
 
-    if (!name || !email || !job || !phone) {
-      setAlert("Please enter valid data!");
-      return;
+    try {
+      await validationSchema.validate({ name, email, job, phone }, { abortEarly: false }); 
+      setAlert(""); 
+
+      const newContact = { ...state.contact, id: v4() };
+      dispatch({ type: 'ADD_CONTACT', payload: newContact }); 
+      
+      dispatch({ type: 'SET_CONTACT', payload: { name: "", email: "", job: "", phone: "" } });
+      
+      dispatch({ type: "TOGGLE_COMPONENT" });
+    } catch (error) {
+      const errors = error.errors.join(", "); 
+      setAlert(errors); 
     }
-    setAlert("");
-    const newContact = { ...state.contact, id: v4() };
-    dispatch({ type: 'ADD_CONTACT', payload: newContact });
-    
-  
-    dispatch({ type: 'SET_CONTACT', payload: { name: "", email: "", job: "", phone: "" } });
-    
-    dispatch({ type: "TOGGLE_COMPONENT" });
   };
 
   return (
@@ -51,9 +71,11 @@ function AddContacts() {
         ))}
       </div>
       <button onClick={addHandler}>
-        <IoIosPersonAdd fontSize="1.5rem" color="#754608" />
+        <IoIosPersonAdd fontSize="1.5rem" color="#0a0455" />
       </button>
-      <div>{alert && <p>{alert}</p>}</div>
+      {alert &&(
+        <div className={styles.alert}><p>{alert}</p> </div>
+      )} 
     </div>
   );
 }
